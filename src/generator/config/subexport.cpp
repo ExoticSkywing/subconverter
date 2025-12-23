@@ -571,7 +571,7 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 if (!udp.is_undef()) {
                     singleproxy["udp"] = udp.get();
                 }
-                if (!x.ServerName.empty()) {
+                if (!x.SNI.empty()) {
                     singleproxy["sni"] = x.SNI;
                 }
                 if (!scv.is_undef())
@@ -1203,10 +1203,10 @@ std::string proxyToSurge(std::vector<Proxy> &nodes, const std::string &base_conf
 }
 
 std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &ext) {
-    /// types: SS=1 SSR=2 VMess=4 Trojan=8,hysteria2=16,vless=32
+    /// types: SS=1 SSR=2 VMess=4 Trojan=8 Hysteria2=16 VLESS=32 AnyTLS=64
     std::string proxyStr, allLinks;
     bool ss = GETBIT(types, 1), ssr = GETBIT(types, 2), vmess = GETBIT(types, 3), trojan = GETBIT(types, 4), hysteria2 =
-            GETBIT(types, 5), vless = GETBIT(types, 6);
+            GETBIT(types, 5), vless = GETBIT(types, 6), anytls = GETBIT(types, 7);
 
     for (Proxy &x: nodes) {
         std::string remark = x.Remark;
@@ -1367,6 +1367,34 @@ std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &
                     proxyStr += "&ws=1";
                     if (!path.empty())
                         proxyStr += "&wspath=" + urlEncode(path);
+                }
+                proxyStr += "#" + urlEncode(remark);
+                break;
+            case ProxyType::AnyTLS:
+                if (!anytls)
+                    continue;
+                proxyStr = "anytls://" + password + "@" + hostname + ":" + port;
+                if (!x.SNI.empty() || !x.AllowInsecure.is_undef() || !fp.empty() || !alpns.empty()) {
+                    proxyStr += "?";
+                    std::vector<std::string> params;
+                    if (!x.SNI.empty())
+                        params.push_back("sni=" + x.SNI);
+                    if (!x.AllowInsecure.is_undef())
+                        params.push_back("insecure=" + std::string(x.AllowInsecure.get() ? "1" : "0"));
+                    if (!fp.empty())
+                        params.push_back("fp=" + fp);
+                    if (!alpns.empty()) {
+                        std::string alpnStr;
+                        for (size_t i = 0; i < alpns.size(); i++) {
+                            if (i > 0) alpnStr += ",";
+                            alpnStr += alpns[i];
+                        }
+                        params.push_back("alpn=" + alpnStr);
+                    }
+                    for (size_t i = 0; i < params.size(); i++) {
+                        if (i > 0) proxyStr += "&";
+                        proxyStr += params[i];
+                    }
                 }
                 proxyStr += "#" + urlEncode(remark);
                 break;
