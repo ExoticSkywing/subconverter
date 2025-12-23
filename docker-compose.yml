@@ -1,9 +1,8 @@
 ---
-version: '3'
 services:
   subconverter:
     # 替换 YOUR_GITHUB_USERNAME 为你的 GitHub 用户名
-    image: ghcr.io/YOUR_GITHUB_USERNAME/subconverter:latest
+    image: subconverter-custom:latest
     container_name: subconverter
     ports:
       - "18399:25500"

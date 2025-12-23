@@ -1,5 +1,12 @@
 # subconverter-docker
 
+## 本地构建
+
+```bash
+docker build -t subconverter-custom:latest -f Dockerfile.local .
+docker-compose down && docker-compose up -d
+```
+
 For running this docker, simply use the following commands:
 ```bash
 # run the container detached, forward internal port 25500 to host port 25500
